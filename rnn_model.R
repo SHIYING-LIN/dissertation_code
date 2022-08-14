@@ -1,16 +1,16 @@
+# CNN-RNN model training & hyperparamter tuning 
 
-# CNN-RNN model
-max_len
-dim(x_train)
-dim(y_train)
-
+# Model parameters
 filters <- 32
+learning_rate <- 0.001
+batch_size <- 32
+epochs <- 20
 
 # Define model
 history <- keras_model_sequential() %>% 
+  # The pre-trained CNN
   time_distributed(layer_conv_2d(input_shape = c(max_len, 105, 105, 1),
-                                 filters = filters, kernel_size = c(3,3), activation = "relu", 
-                                 padding = "same",
+                                 filters = filters, kernel_size = c(3,3), activation = "relu", padding = "same",
                                  kernel_initializer = 'glorot_uniform', 
                                  kernel_regularizer=regularizer_l2(0.001))) %>%
   time_distributed(layer_conv_2d(filters = filters, kernel_size = c(3,3), activation = "relu",
@@ -19,26 +19,26 @@ history <- keras_model_sequential() %>%
                                  padding = "same", kernel_initializer = 'glorot_uniform', kernel_regularizer=regularizer_l2(0.001))) %>%
   time_distributed(layer_conv_2d(filters = filters, kernel_size = c(3,3), activation = "relu", 
                                  padding = "same", kernel_initializer = 'glorot_uniform', kernel_regularizer=regularizer_l2(0.001))) %>%
+  # RNN with LSTM units  
   time_distributed(layer_flatten()) %>%
-  layer_lstm(64, return_sequences = TRUE, dropout = 0.25) %>%
   layer_lstm(64, return_sequences = FALSE, dropout = 0.25) %>%
   layer_dense(2, activation = "softmax") 
 
 # Compile model
 history %>% compile(
   loss = "binary_crossentropy", 
-  optimizer = optimizer_adam(learning_rate = 0.001),
+  optimizer = optimizer_adam(learning_rate = learning_rate),
   metrics = c('accuracy')
 )
-
 
 # Model fitting
 rnn <- history %>% fit(
   x_train,
   y_train,
-  batch_size = 32,
-  epochs = 10,
+  batch_size = batch_size,
+  epochs = epochs,
   validation_data = list(x_valid, y_valid),
+  # Control overfitting by early stopping
   callbacks = callback_early_stopping(
     monitor = "val_loss",
     patience = 5)
@@ -46,9 +46,11 @@ rnn <- history %>% fit(
 
 
 # Tune hyperparameters ------------------------------------------
+# Load plot packages
 library(ggplot2)
 library(ggpubr)
 
+# Set plot parameters
 legend_theme <- theme(
   text = element_text(size = 20),
   legend.text = element_text(size = 20),
@@ -99,49 +101,7 @@ ggarrange(p1, p2, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
 
 
 # The maximum sequence length 
-# Training data
 p3 <- ggplot() +
-  geom_line(aes(x = 1:length(rnn_maxlen_2$metrics$loss),
-                y = rnn_maxlen_2$metrics$loss, col = "2"), lwd = 1.2) +
-  geom_line(aes(x = 1:length(rnn_maxlen_3$metrics$loss),
-                y = rnn_maxlen_3$metrics$loss, col = "3"), lwd = 1.2) +
-  geom_line(aes(x = 1:length(rnn_maxlen_4$metrics$loss),
-                y = rnn_maxlen_4$metrics$loss, col = "4"), lwd = 1.2) +
-  geom_line(aes(x = 1:length(rnn_maxlen_5$metrics$loss),
-                y = rnn_maxlen_5$metrics$loss, col = "5"), lwd = 1.2) +
-  geom_line(aes(x = 1:length(rnn_maxlen_6$metrics$loss),
-                y = rnn_maxlen_6$metrics$loss, col = "6"), lwd = 1.2) +
-  scale_color_discrete(name = "sequence length",
-                       breaks = c("2", "3", "4", "5", "6"),
-                       labels = c("2 timesteps", "3 timesteps", "4 timesteps", "5 timesteps", "6 timesteps")) +
-  scale_x_continuous(limits = c(1,10), breaks = seq(0,10,2)) +
-  scale_y_continuous(limits = c(0,0.7), breaks = seq(0,0.7,0.1))+
-  xlab("epoch") + ylab("training loss") +
-  theme_bw() + axis_theme + legend_theme
-
-p4 <- ggplot() +
-  geom_line(aes(x = 1:length(rnn_maxlen_2$metrics$loss),
-                y = rnn_maxlen_2$metrics$accuracy, col = "2"), lwd = 1.2) +
-  geom_line(aes(x = 1:length(rnn_maxlen_3$metrics$loss),
-                y = rnn_maxlen_3$metrics$accuracy, col = "3"), lwd = 1.2) +
-  geom_line(aes(x = 1:length(rnn_maxlen_4$metrics$loss),
-                y = rnn_maxlen_4$metrics$accuracy, col = "4"), lwd = 1.2) +
-  geom_line(aes(x = 1:length(rnn_maxlen_5$metrics$loss),
-                y = rnn_maxlen_5$metrics$accuracy, col = "5"), lwd = 1.2) +
-  geom_line(aes(x = 1:length(rnn_maxlen_6$metrics$loss),
-                y = rnn_maxlen_6$metrics$accuracy, col = "6"), lwd = 1.2) +
-  scale_color_discrete(name = "sequence length",
-                       breaks = c("2", "3", "4", "5", "6"),
-                       labels = c("2 timesteps", "3 timesteps", "4 timesteps", "5 timesteps", "6 timesteps")) +
-  scale_x_continuous(limits = c(1,10), breaks = seq(0,10,2)) +
-  scale_y_continuous(limits = c(0.6,1), breaks = seq(0,1,0.1))+
-  xlab("epoch") + ylab("training accuracy") +
-  theme_bw() + axis_theme + legend_theme
-  
-ggarrange(p3, p4, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
-
-# Validation data
-p5 <- ggplot() +
   geom_line(aes(x = 1:length(rnn_maxlen_2$metrics$loss),
                 y = rnn_maxlen_2$metrics$val_loss, col = "2"), lwd = 1.2) +
   geom_line(aes(x = 1:length(rnn_maxlen_3$metrics$loss),
@@ -160,7 +120,7 @@ p5 <- ggplot() +
   xlab("epoch") + ylab("validation loss") +
   theme_bw() + axis_theme + legend_theme
 
-p6 <- ggplot() +
+p4 <- ggplot() +
   geom_line(aes(x = 1:length(rnn_maxlen_2$metrics$loss),
                 y = rnn_maxlen_2$metrics$val_accuracy, col = "2"), lwd = 1.2) +
   geom_line(aes(x = 1:length(rnn_maxlen_3$metrics$loss),
@@ -179,10 +139,10 @@ p6 <- ggplot() +
   xlab("epoch") + ylab("validation accuracy") +
   theme_bw() + axis_theme + legend_theme
 
-ggarrange(p5, p6, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
+ggarrange(p3, p4, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
 
 
-# The LSTM layers
+# The number of the LSTM layers
 p7 <- ggplot() +
   geom_line(aes(x = 1:length(rnn$metrics$loss),
                 y = rnn$metrics$val_loss, col = "1"), lwd = 1.2) +
@@ -214,11 +174,4 @@ p8 <- ggplot() +
   theme_bw() + axis_theme + legend_theme
 
 ggarrange(p7, p8, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
-
-
-save.image("C:/Users/iandurbach/Desktop/rnn_hyper_2.RData")
-
-
-
-
 
