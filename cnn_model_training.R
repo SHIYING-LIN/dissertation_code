@@ -8,12 +8,12 @@ library(abind) # for merge arrays
 # Load data
 load('C:/Users/iandurbach/Desktop/dissertation/Data/MSc-2015-seal-data.RData')
 
-# -------------------------Data preparation------------------------------------ 
+# ------------------------ Data preprocessing ------------------------------------ 
 # Number of targets in total
 length(target.pix)
 
 # Have a look at the first frame of the first target
-#image(target.pix[[1]][[1]])
+image(target.pix[[1]][[1]])
 
 # The number of frames within each target 
 n_mat_per_target <- target.pix %>% map_depth(1, length) %>% unlist(use.names = T)
@@ -185,7 +185,7 @@ cat("y_valid_shape:", dim(y_valid), "\n")
 
 
 #------------------- CNN ----------------------------------------
-# Parameters 
+# hyperparameters 
 input_shape <- c(105, 105, 1)
 filters <- 32
 dense_nodes <- 64
