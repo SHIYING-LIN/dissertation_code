@@ -13,8 +13,20 @@ load('C:/Users/iandurbach/Desktop/dissertation/Data/MSc-2015-seal-data.RData')
 # Number of targets in total
 length(target.pix)
 
-# Have a look at the first frame of the first target
-#image(target.pix[[1]][[1]])
+# Have a look at sampled images
+head(target.var)
+
+## Images of non-seal & seal targets
+par(mar = c(1,1,1,1))
+
+length(target.pix[[1]])
+par(mfrow = c(3,4))
+for (i in 1:11) {image <- image(target.pix.nopad[[1]][[i]])}
+
+length(target.pix[[2]])
+par(mfrow = c(5,6))
+for (i in 1:26) {image <- image(target.pix.nopad[[2]][[i]])}
+
 
 # The number of frames within each target 
 n_mat_per_target <- target.pix %>% map_depth(1, length) %>% unlist(use.names = T)
