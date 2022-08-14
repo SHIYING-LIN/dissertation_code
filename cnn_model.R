@@ -37,9 +37,9 @@ history <- keras_model_sequential() %>%
  
 # Compile model
 history %>% compile(
-  loss = loss_binary_crossentropy,
-  optimizer = optimizer_adadelta(),
-  metrics = c('accuracy')
+  loss =  "binary_crossentropy", 
+  optimizer = optimizer_adam(),
+  metrics = c("accuracy")
 )
   
 # Model training
