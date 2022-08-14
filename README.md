@@ -1,4 +1,4 @@
- Deep learning for target classification in video images
+# Deep learning for target classification in video images
 
 This repository is designed to train deep learning classifiers for automatic target classification. All codes are implemented in R (4.2.0) using the TensorFlow library with Keras (version 2.9.0). We trained and tested models on a virtual machine hosted on Microsoft Azure with 24 GB memory. The main packages cover dplyr (1.0.9), purrr (0.3.4), reticulate (1.25), ggplot (3.3.6), and abind (1.4-5).
 
