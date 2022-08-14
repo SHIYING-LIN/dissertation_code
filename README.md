@@ -8,6 +8,8 @@ Two main categories of deep learning methods, convolutional neural networks (CNN
 ## Data preprocessing
 A total of 574 min of sonar data (76GB) were collected, and 133 targets were manually detected for the classification classifier development. Before preprocessing data, the high-resolution images were transformed into pixel matrices, see sampled pixel images as follows.
 
+![image](https://user-images.githubusercontent.com/91959615/184532255-84585fdc-c1d2-4e27-9c0c-6dfea8d22c6a.png)
+![image](https://user-images.githubusercontent.com/91959615/184532243-04048f5c-faaf-490d-b28d-2912d58a03a7.png)
 
 The overall processes of data preprocessing for the CNN and CNN-RNN models were shown on the flow charts.
 
