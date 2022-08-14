@@ -1,6 +1,11 @@
 # CNN Model training & hyperparameter tuning
 
-# Hyperparameters -- set by users
+# Load library for plotting
+library(tidyverse)
+library(ggplot2)
+library(ggpubr)
+
+# Parameters -- set by users
 input_shape <- c(105, 105, 1)
 filters <- 32
 dense_nodes <- 64
@@ -50,7 +55,7 @@ cnn <- history %>% fit(
     patience = 5)
 )
 
-# Evaluate model: This is frame-level accuracy in three data sets
+# Evaluate model
 # Training data
 pred_train <- history %>% predict_classes(x_train)
 train_table <- table(Predicted = pred_train, Actual = y_train_labels)
@@ -61,7 +66,7 @@ pred_valid <- history %>% predict_classes(x_valid)
 valid_table <- table(Predict = pred_valid, Actual = y_valid_labels)
 score_valid <- history %>% evaluate(x_valid, y_valid)
 
-# Model performance on test data  
+# Test data  
 pred_test <- history %>% predict_classes(x_test)
 test_table <- table(Predicted = pred_test, Actual = y_test_labels)
 score_test <- history %>% evaluate(x_test, y_test)
@@ -76,13 +81,6 @@ cat('Validation accuracy:', score_valid[[2]], '\n')
 cat('Test accuracy:', score_test[[2]], '\n')
 
 
-
-# ------------------ hyperparameters tuning -----------------------
-# Load plot library
-library(tidyverse)
-library(ggplot2)
-library(ggpubr)
-
 # Set plot parameters
 legend_theme <- theme(
   legend.text = element_text(colour = "black", size = 20),
@@ -95,13 +93,11 @@ legend_theme <- theme(
 axis_theme <- theme(
   axis.title = element_text(
     face = "plain", 
-    size = 20,
+    size = 20
 ))
 
 
 # The number of neurons in the convolution layers
-cnn_conv_nodes_32 <- cnn
-
 p1 <- ggplot() +
   geom_line(aes(x = 1:length(cnn_conv_nodes_32$metrics$loss), 
                 y = cnn_conv_nodes_32$metrics$val_loss, col = "32"), lwd =1.2) +
@@ -132,10 +128,7 @@ p2 <- ggplot() +
 ggarrange(p1, p2, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
 
 
-
 # The number of neurons in the dense layers
-cnn_dense_nodes_64 <- cnn
-
 p3 <- ggplot() +
   geom_line(aes(x = 1:length(cnn_dense_nodes_32$metrics$loss),
                 y = cnn_dense_nodes_32$metrics$val_loss, col = "32"), lwd = 1.2) +
@@ -171,8 +164,6 @@ p4 <- ggplot() +
 ggarrange(p3, p4, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
 
 # The number of dense layers
-cnn_dense_layer_3 <- cnn
-
 p5 <- ggplot() +
   geom_line(aes(x = 1:length(cnn_dense_layer_1$metrics$loss),
                 y = cnn_dense_layer_1$metrics$val_loss, col = "1"), lwd = 1.2) +
@@ -211,11 +202,7 @@ p6 <- ggplot() +
 
 ggarrange(p5, p6, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
 
-
-
 # Dropout rate
-cnn_rate_0.25 <- cnn
-
 p7 <- ggplot() +
   geom_line(aes(x = 1:length(cnn_rate_0.1$metrics$loss),
                 y = cnn_rate_0.1$metrics$val_loss, col = "1"), lwd = 1.2) +
@@ -255,10 +242,3 @@ p8 <- ggplot() +
   theme_bw() + axis_theme + legend_theme
 
 ggarrange(p7, p8, ncol = 2, nrow = 1, common.legend = TRUE, legend = "bottom")
-
-
-
-
-
-
-
