@@ -16,7 +16,8 @@ A total of 574 min of sonar data (76GB) were collected, and 133 targets were man
 
 ![image](https://user-images.githubusercontent.com/91959615/184532243-04048f5c-faaf-490d-b28d-2912d58a03a7.png)
 
-The overall processes of data preprocessing for the frame-only CNN and CNN-RNN models are shown below.
+
+The following flowcharts illustrate the entire process of the two models predicting each target's label. The general process of the frame-only CNN model is shown in the upper panel and the process of CNN-RNN is shown in the lower panel.
 
 <img width="455" alt="image" src="https://user-images.githubusercontent.com/91959615/184534816-683aad4f-2e5e-4434-b9eb-bc1aa6eb37f5.png">
 
