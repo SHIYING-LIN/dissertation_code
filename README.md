@@ -19,9 +19,9 @@ A total of 574 min of sonar data (76GB) were collected, and 133 targets were man
 
 The following flowcharts illustrate the entire process of the two models predicting each target's label. The general process of the frame-only CNN model is shown in the upper panel and the process of CNN-RNN is shown in the lower panel.
 
-<img width="455" alt="image" src="https://user-images.githubusercontent.com/91959615/184534816-683aad4f-2e5e-4434-b9eb-bc1aa6eb37f5.png">
+![sonar data](https://user-images.githubusercontent.com/91959615/184537713-508fe410-799c-4bdf-8a8b-0a5dab4e5ac2.jpg)
 
-<img width="463" alt="image" src="https://user-images.githubusercontent.com/91959615/184534821-e772b29e-8efa-4d64-9278-1b03dcaa1035.png">
+![sonar data_rnn](https://user-images.githubusercontent.com/91959615/184537725-e5e5c885-93f0-473b-bb95-31444e146abd.jpg)
 
 
 ## Model training & Hyperparameter tuning
