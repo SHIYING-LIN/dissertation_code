@@ -1,13 +1,14 @@
-# Overall target-level accuracy 
+# CNN prediction
 
-# ------------------------- Validation data ---------------------------------
+# --------------------- Target-level accuracy -------------------------------
+# Validation data 
 # Merge predictions of targets in the validation data with their actual label
 valid <- rbind(seals_class[valid_id_seals,], targs_class[valid_id_targs,])
 pred_valid_class <- history %>% predict_classes(x_valid) %>% as.data.frame()
 colnames(pred_valid_class) <- c("pred_class")
 valid <- cbind(valid, pred_valid_class)
 
-# Set parameters for calculating accuracy under different thresholds
+# Tune threshold
 thre <- seq(0.05, 0.95, 0.05)
 valid_table <- array(as.matrix(0, ncol = 2, nrow = 2), dim = c(length(thre), 2, 2))
 valid_acc <- rep(0, length = length(thre))
@@ -49,16 +50,20 @@ ggplot() +
   theme_bw() +
   theme(axis.title = element_text(face = "plain", size = 12))
   
-# The test result (accuracy & confusion matrix) under the best threshold
+# The test result (accuracy & confusion matrix) using the best threshold
 valid_result <- valid %>% 
   group_by(id) %>% 
   summarize(meanseal = mean(pred_class), true_class = first(class)) %>%
   mutate(targ_class = ifelse(meanseal > best_valid_thre, 1, 0))
+
+# The confusion matrix
 valid_table <- table(Pred = valid_result$targ_class, Actual = valid_result$true_class)
+
+# Target-level accuracy in the test set
 valid_acc <- round((valid_table[1,1] + valid_table[2,2]) / sum(valid_table) * 100, 2)
 
 
-# --------------------------------- Train data ----------------------------------------
+# Train data ----------------------------------------
 # Merge predictions of targets in the train data with their actual label
 train <- rbind(seals_class[train_id_seals,], targs_class[train_id_targs,])
 pred_train_class <- history %>% predict_classes(x_train) %>% as.data.frame()
@@ -79,7 +84,7 @@ train_acc <- round((train_table[1,1] + train_table[2,2]) / sum(train_table) * 10
 cat("max_train_accuracy =", paste0(train_acc, "%"), "when threshold =", best_valid_thre)
 
 
-# --------------------------------- Test data ----------------------------------------
+# Test data ----------------------------------------
 # Merge predictions of targets in the test data with their actual label
 test <- rbind(seals_class[test_id_seals,], targs_class[test_id_targs,])
 pred_test_class <- history %>% predict_classes(x_test) %>% as.data.frame()
@@ -104,58 +109,53 @@ cat("target-level accuracy in the test data:", test_acc, "\n")
 cat("target-level accuracy in the validation data:", valid_acc, "\n")
 
 
-# Target-level accuracy per target ------------------------------
-# Merge train & test & validation dataset
+# -------------------------- Frame-level accuracy ------------------------------
+# Merge train & test & validation predictions
 train$dataset <- c("train")
 valid$dataset <- c("valid")
 test$dataset <- c("test")
 pred <- rbind(train, valid, test)
-length(unique(pred$id)) == 133 # the unique label of all data should be 133
+
+test_table_frame <- table(Pred = test$class, Actual = test$pred_class)
+valid_table_frame <- table(Pred = valid$class, Actual = valid$pred_class)
+train_table_frame <- table(Pred = train$class, Actual = train$pred_class)
+
+# Frame-level accuracy in three subsets
+round((test_table_frame[1,1] + test_table_frame[2,2]) / sum(test_table_frame) * 100, 2)
+round((valid_table_frame[1,1] + valid_table_frame[2,2]) / sum(valid_table_frame) * 100, 2)
+round((train_table_frame[1,1] + train_table_frame[2,2]) / sum(train_table_frame) * 100, 2)
+
+# False positive rate
+round(test_table_frame[2,1] / sum(test_table_frame) * 100, 2)
+# False negative rate
+round(test_table_frame[1,2] / sum(test_table_frame) * 100, 2)
 
 
-# Total frame-level accuracy: nrow(predicted class == target_class$valid) / 3478
-frame_acc <- nrow(pred[pred$class == pred$pred_class,]) / n_mat
-cat('Total frame-level accuracy:', paste0(round(frame_acc * 100, 2), "%"), '\n')
-
-
-# Target-level accuracy per target
+# -------------------------- Frame-level accuracy per target --------------------------
 pred <- pred[pred$dataset == "test"] # foucs on the test set
 correct_class_per_tagret <- NULL
 target_acc_per_target <- NULL
 
 for (id in c(unique(pred$id))) {
-  # the correct predicted class 
+  # The correct predicted class 
   correct_class_per_tagret[id] <- nrow(pred[pred$id == id & pred$class == pred$pred_class,])
-  # the target-level accuracy in each target
+  # The frame-level accuracy in each target
   target_acc_per_target[id] <- round(correct_class_per_tagret[id] / as.numeric(n_mat_per_target[id]), 2)
 }
 
-# Keep the accuracy and add id
+# Combine target with their ID
 target_acc_per_target <- target_acc_per_target %>% unlist() %>% as.data.frame()
 colnames(target_acc_per_target) <- c("target_acc")
 target_acc_per_target <- cbind(id = unique(pred$id), target_acc_per_target)
-
-# Save the frame-level accuracy per target in csv file
-write.csv(target_acc_per_target, file = "C:/Users/iandurbach/Desktop/per_target_accuracy.csv")
-
-
 
 
 # Check the misclassified target 
 target_acc_per_target_mis <- target_acc_per_target[target_acc_per_target$target_acc != 1,]
 
-# The number of type two error (nonseal-seal)
-nrow(target_acc_per_target_mis[target.var$valid[target.var$id == target_acc_per_target_mis$id] == "Seal",])
 
-
-# -------------------------------------------------
-# Let's have a look at which targets are prefect classified by CNN!
-
+# Let's have a look at the specific classification result by CNN!
 # Targets with 100% accuracy
 acc_100 <- target.var[target_acc_per_target$id[target_acc_per_target$target_acc == 1],]
-# the proportion of seals accounts for 100% accuracy
-acc_100_seal <- nrow(acc_100[acc_100$valid == "Seal",]) / nrow(acc_100)
-acc_100_seal
 
 # Check the target with lower accuracy (e.g. <0.5)
 target_acc_per_target_mis <- target_acc_per_target[target_acc_per_target$target_acc < 0.5,]
@@ -172,29 +172,17 @@ for (i in 1:23) {
   image <- image(target.pix.nopad[["2036190056"]][[i]])
 }
 
-## 100% non-seal/non-seal
+# 100% non-seal/non-seal
 length(target.pix[["1735000011"]])
 par(mfrow = c(4,4))
 for (i in 1:13) {
   image <- image(target.pix.nopad[["1735000011"]][[i]])
 }
 
-
-## Actual: seal/ Predict: non-seal
-first(pred$class[pred$id == "1918020023"]) # the actual class: seal
-pred$pred_class[pred$id == "1918020023"] # the predicted class in each frame
-target_acc_per_target_mis["1918020023", 2] # the accuracy: only 0.06
-
-length(target.pix[["1918020023"]])
-par(mfrow = c(5,4))
-for (i in 1:17) {
-  image <- image(target.pix.nopad[["1918020023"]][[i]])
-}
-
-### Another one 
-first(pred$class[pred$id == "1809540102"])
-pred$pred_class[pred$id == "1809540102"] 
-target_acc_per_target_mis["1809540102", 2]
+# False negative rate example (reason 1)
+first(pred$class[pred$id == "1809540102"]) # the actual class: seal
+pred$pred_class[pred$id == "1809540102"] # the predicted class in each frame
+target_acc_per_target_mis["1809540102", 2] # the frame-level accuracy
 
 length(target.pix[["1809540102"]])
 par(mfrow = c(4,4))
@@ -202,33 +190,17 @@ for (i in 1:16) {
   image <- image(target.pix.nopad[["1809540102"]][[i]])
 }
 
-
-# Actual: non-seal/ Predict: seal (0% acc)
+# Another false negative rate example (reason 2)
 target_acc_per_target_mis["1928490038", 2]
-target_acc_per_target_mis["1903580027", 2] 
+target_acc_per_target_mis["1928490038", 2] 
 
-pred$pred_class[pred$id == "1903580027"]
-target.var$valid[target.var$id == "1903580027"]
-
-length(target.pix[["1903580027"]])
-par(mfrow = c(4,4))
-for (i in 1:15) {
-  image <- image(target.pix.nopad[["1903580027"]][[i]])
-}
-
-## another one
 pred$pred_class[pred$id == "1928490038"] 
 target.var$valid[target.var$id == "1928490038"]
 
+# False positive rate exmaple 
 length(target.pix[["1928490038"]])
 par(mfrow = c(5,4))
 for (i in 1:19) {
   image <- image(target.pix.nopad[["1928490038"]][[i]])
 }
-
-
-
-# Save all results
-save.image("C:/Users/iandurbach/Desktop/cnn_target.RData")
-
 
