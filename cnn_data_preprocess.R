@@ -27,7 +27,6 @@ length(target.pix[[2]])
 par(mfrow = c(5,6))
 for (i in 1:26) {image <- image(target.pix.nopad[[2]][[i]])}
 
-
 # The number of frames within each target 
 n_mat_per_target <- target.pix %>% map_depth(1, length) %>% unlist(use.names = T)
 
@@ -41,14 +40,13 @@ dim_mat <- dim(target.pix[[1]][[1]])
 c(img_cols, img_rows) %<-% c(dim_mat[1], dim_mat[2])
 
 # ---------------------------- For Seals ------------------------------------
-print("---- For Seals ----")
+# Extract a subset with only seal targets
 Seals <- target.var[target.var$valid == "Seal",]
 Seals$class <- ifelse(Seals$valid  == "Seal", 1, 0)
 
 # Create the pixel matrix of all seals
 pixel_seals <- target.pix[Seals$id]
 n_mat_seals <- sum(n_mat_per_target[Seals$id])
-
 x_mat_seals <- array(rep(0, n_mat_seals * dim_mat[1] * dim_mat[2]), 
                      dim = c(n_mat_seals, dim_mat[1], dim_mat[2]))
 N <- 0
@@ -61,7 +59,7 @@ for(i in 1:length(pixel_seals)){
 
 dim(x_mat_seals)
 
-# X
+# X data
 # Train/test/validation data 
 set.seed(1377)
 train_id_seals <- sample(1:n_mat_seals, round(0.8 * n_mat_seals), replace = FALSE)
@@ -74,18 +72,14 @@ x_test_seals <- x_mat_seals[test_id_seals,,]
 valid_id_seals <- setdiff(id, test_id_seals)
 x_valid_seals <- x_mat_seals[valid_id_seals,,]
 
-# Check the accuracy of data classification 
+# Check correctness of data splitting
 intersect(train_id_seals, test_id_seals)
 intersect(test_id_seals, valid_id_seals)
+cat(nrow(x_train_seals), "train samples", "\n"))
+cat(nrow(x_valid_seals), "train samples", "\n")
+cat(nrow(x_test_seals), "train samples", "\n")
 
-cat(nrow(x_train_seals), "train samples",
-    paste0("(", round(nrow(x_train_seals) / n_mat_seals * 100, 1), "%)"), "\n")
-cat(nrow(x_valid_seals), "train samples",
-    paste0("(", round(nrow(x_valid_seals) / n_mat_seals * 100, 1), "%)"), "\n")
-cat(nrow(x_test_seals), "train samples",
-    paste0("(", round(nrow(x_test_seals) / n_mat_seals * 100, 1), "%)"), "\n")
-
-# Y
+# Y data
 # Transform Y into the long format 
 seals_class <- data.frame(id = rep(names(n_mat_per_target[Seals$id]), 
                                    times = n_mat_per_target[Seals$id])) %>%
@@ -97,15 +91,14 @@ y_test_seals <- as.matrix(seals_class$class[test_id_seals], ncol = 1)
 y_valid_seals <- as.matrix(seals_class$class[valid_id_seals], ncol = 1)
 
 
-#------------------------  For Non-seal Targets   ----------------------------------------
-print("---- For Non-seal Targets ----")
+#----------------------  For Non-seal Targets  --------------------------
+# Extract a subset with only non-seal targets
 Targs <- target.var[target.var$valid != "Seal",]
 Targs$class <- ifelse(Targs$valid  == "Seal", 1, 0)
 
 # Create the pixel matrix of all non-seal targets
 pixel_targs <- target.pix[Targs$id]
 n_mat_targs <- sum(n_mat_per_target[Targs$id])
-
 x_mat_targs <- array(rep(0, n_mat_targs * dim_mat[1] * dim_mat[2]), 
                      dim = c(n_mat_targs, dim_mat[1], dim_mat[2]))
 N <- 0
@@ -118,7 +111,7 @@ for(i in 1:length(pixel_targs)){
 
 dim(x_mat_targs)
 
-# X
+# X data
 # Train/test/validation data 
 set.seed(1377)
 train_id_targs <- sample(1:n_mat_targs, round(0.8 * n_mat_targs), replace = FALSE)
@@ -131,16 +124,13 @@ x_test_targs <- x_mat_targs[test_id_targs,,]
 valid_id_targs <- setdiff(id, test_id_targs)
 x_valid_targs <- x_mat_targs[valid_id_targs,,]
 
-# Check the accuracy of data classification 
+# Check correctness of data splitting
 intersect(train_id_targs, valid_id_targs)
-cat(nrow(x_train_targs), "train samples",
-    paste0("(", round(nrow(x_train_targs) / n_mat_targs * 100, 1), "%)"), "\n")
-cat(nrow(x_valid_targs), "validation samples", 
-    paste0("(", round(nrow(x_valid_targs) / n_mat_targs * 100, 1) ,"%)"), "\n")
-cat(nrow(x_test_targs), "test samples", 
-    paste0("(", round(nrow(x_test_targs) / n_mat_targs * 100, 1), "%)"), "\n")
+cat(nrow(x_train_targs), "train samples", "\n")
+cat(nrow(x_valid_targs), "validation samples", "\n")
+cat(nrow(x_test_targs), "test samples", "\n")
 
-# Y
+# Y data
 # Transform Y into the long format 
 targs_class <- data.frame(id = rep(names(n_mat_per_target[Targs$id]), 
                                    times = n_mat_per_target[Targs$id])) %>%
@@ -150,7 +140,6 @@ targs_class <- data.frame(id = rep(names(n_mat_per_target[Targs$id]),
 y_train_targs <- as.matrix(targs_class$class[train_id_targs], ncol = 1)
 y_test_targs <- as.matrix(targs_class$class[test_id_targs], ncol = 1)
 y_valid_targs <- as.matrix(targs_class$class[valid_id_targs], ncol = 1)
-
 
 
 # --------------------- True train/validation/test data ------------------------
@@ -171,10 +160,6 @@ x_train <- x_train / max.pix
 x_test <- x_test / max.pix
 x_valid <- x_valid / max.pix
 
-cat("x_train_shape:", dim(x_train), "\n")
-cat("x_test_shape:", dim(x_test), "\n")
-cat("x_valid_shape:", dim (x_valid), "\n")
-
 # Merge Y matrices from seal & non-seal targets
 y_train <- rbind(y_train_seals, y_train_targs)
 y_test <- rbind(y_test_seals, y_test_targs)
@@ -191,6 +176,11 @@ y_valid_labels <- y_valid
 y_train <- to_categorical(y_train, 2)
 y_test <- to_categorical(y_test, 2)
 y_valid <- to_categorical(y_valid, 2)
+
+# Display the dimension of X and Y data
+cat("x_train_shape:", dim(x_train), "\n")
+cat("x_test_shape:", dim(x_test), "\n")
+cat("x_valid_shape:", dim (x_valid), "\n")
 
 cat("y_train_shape:", dim(y_train), "\n")
 cat("y_test_shape:", dim(y_test), "\n")
