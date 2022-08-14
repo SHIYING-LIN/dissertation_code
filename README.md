@@ -34,11 +34,12 @@ Here is an explanation of the parameters that can be used for an experiment:
 - `rate`: the dropout rate of the dropout layers (same applied throughout the different dropout layers, good default is 0.25)
 - `batch_size`:  the number of units manufactured in a production run (default to 32)
 - `epochs`: the number of passes of the entire training dataset the algorithm has completed (default to 60 for CNN, 20 for CNN-RNN)
-- `sequence_length` number of frames in one input sequence for CNN-RNN (good default is 6)
+- `sequence_length`: number of frames in one input sequence for CNN-RNN (good default is 6)
+- `learning_rate`: it shows how quickly the CNN-RNN model is adapted to the data (good default is 0.001)
 
 
 ## Model prediction
-The `cnn_prediction` and `rnn_prediction` file can be used to load a trained model and use it to output predicted labels for each frame in the dataset.
+The `cnn_prediction` and `rnn_prediction` file can be used to output predicted probabilities for each target in the dataset. We use two accuracy metrcis - "frame-level" accuracy and "target-level" accuracy, where the threshold is required to be fine-tune for a better model performance. The false positive rate and false negative rate are also produced in this step.
 
 
 
